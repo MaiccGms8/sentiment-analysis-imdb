@@ -1,29 +1,16 @@
-import re
-import nltk
-from nltk.corpus import stopwords
+import sys
+import os
+sys.path.insert(0, os.path.dirname(__file__))
 
-# Baixa as palavras vazias 
-nltk.download('stopwords')
+from preprocess import limpar_texto
 
-def limpar_texto(texto):
-    if not isinstance(texto, str):
-        return ""
-
-    # Deixar tudo em minúsculo
-    texto = texto.lower()
-
-    # Remover pontuação e números (mantendo acentos)
-    texto = re.sub(r'[^a-záàâãéèêíïóôõöúç\s]', '', texto)
-
-    # Tratar Stopwords
-    pt_stopwords = set(stopwords.words('portuguese'))
-    
-    # Observação: Não podemos remover palavras de negação em análise de sentimento
-    palavras_negacao = {'não', 'nem', 'nunca', 'nada', 'tampouco'}
-    pt_stopwords = pt_stopwords - palavras_negacao
-    
-    # Tokenização (separar palavras e limpeza)
-    palavras = texto.split()
-    palavras_limpas = [p for p in palavras if p not in pt_stopwords]
-    
-    return " ".join(palavras_limpas)
+if __name__ == '__main__':
+    exemplos = [
+        "Esse filme foi incrível, amei cada cena!",
+        "Péssimo filme, total perda de tempo.",
+        "Não gostei nada do final, decepcionante.",
+    ]
+    for frase in exemplos:
+        print(f"Original:  {frase}")
+        print(f"Limpa:     {limpar_texto(frase)}")
+        print()
