@@ -1,4 +1,13 @@
-# Análise de Sentimento - IMDb PT-BR
+## Análise de Sentimento - IMDb PT-BR
+
+![Python](https://img.shields.io/badge/Python-3.12-blue?style=for-the-badge&logo=python&logoColor=white)
+![Pandas](https://img.shields.io/badge/Pandas-Data_Analysis-150458?style=for-the-badge&logo=pandas&logoColor=white)
+![Scikit-Learn](https://img.shields.io/badge/Scikit--Learn-Machine_Learning-F7931E?style=for-the-badge&logo=scikit-learn&logoColor=white)
+![PyTorch](https://img.shields.io/badge/PyTorch-Deep_Learning-EE4C2C?style=for-the-badge&logo=pytorch&logoColor=white)
+![Hugging Face](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Transformers-yellow?style=for-the-badge)
+![Streamlit](https://img.shields.io/badge/Streamlit-Dashboard_BI-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white)
+![Plotly](https://img.shields.io/badge/Plotly-Data_Viz-3F4F75?style=for-the-badge&logo=plotly&logoColor=white)
+[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)]([https://maicc-sentiment-analysis-imdb.streamlit.app/](https://github.com/MaiccGms8/sentiment-analysis-imdb))
 
 Classificação de avaliações de filmes em português como **positivas** ou **negativas** usando NLP e Machine Learning, com interface web interativa via Streamlit.
 
@@ -142,9 +151,9 @@ jupyter lab
 - [x] Modelo baseline (Regressão Logística) treinado e salvo
 - [x] Interface web com Streamlit
 - [x] Verificação de compatibilidade de versão do scikit-learn
-- [ ] Comparação entre modelos (Naive Bayes, Random Forest)
-- [ ] Tuning de hiperparâmetros
-- [ ] Modelos de Deep Learning / BERT em português
+- [x] Comparação entre modelos (Naive Bayes, Random Forest)
+- [x] Tuning de hiperparâmetros
+- [x] Modelos de Deep Learning / BERT em português
 
 ---
 

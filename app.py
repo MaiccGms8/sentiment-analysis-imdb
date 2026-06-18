@@ -1,64 +1,127 @@
-import sys
-import os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
-
-import sklearn
 import streamlit as st
 import joblib
-from preprocess import limpar_texto
+import os
+import sys
+import pandas as pd
+import plotly.express as px
 
-def _verificar_versao():
-    meta_path = os.path.join(os.path.dirname(__file__), 'models/metadata.pkl')
-    if not os.path.exists(meta_path):
-        return
-    meta = joblib.load(meta_path)
-    saved_version = meta.get('sklearn_version', 'desconhecida')
-    if saved_version != sklearn.__version__:
-        st.error(
-            f"**Incompatibilidade de versão do scikit-learn**\n\n"
-            f"- Modelo treinado com: `{saved_version}`\n"
-            f"- Versão atual: `{sklearn.__version__}`\n\n"
-            "Execute o comando abaixo **no mesmo ambiente** em que o app está rodando e reinicie:\n"
-            "```\npython src/02_save_model.py\n```"
-        )
-        st.stop()
+# Garante que o Python encontre o script preprocess na pasta src
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from src.preprocess import limpar_texto
+
+# --- CONFIGURAÇÃO DA PÁGINA ---
+st.set_page_config(
+    page_title="Dashboard de Análise de Sentimento",
+    page_icon="📊",
+    layout="wide"
+)
+
+# --- CARREGAR MODELOS ---
+base_dir = os.path.dirname(os.path.abspath(__file__))
+caminho_modelo = os.path.join(base_dir, 'models/melhor_modelo_sentimento.pkl')
+caminho_vectorizer = os.path.join(base_dir, 'models/vectorizer_tfidf.pkl')
 
 @st.cache_resource
-def carregar_modelo():
-    base = os.path.dirname(__file__)
-    modelo = joblib.load(os.path.join(base, 'models/melhor_modelo_sentimento.pkl'))
-    vectorizer = joblib.load(os.path.join(base, 'models/vectorizer_tfidf.pkl'))
-    return modelo, vectorizer
+def carregar_artefatos():
+    model = joblib.load(caminho_modelo)
+    vectorizer = joblib.load(caminho_vectorizer)
+    return model, vectorizer
 
-def classificar(texto, modelo, vectorizer):
-    texto_limpo = limpar_texto(texto)
-    vetor = vectorizer.transform([texto_limpo])
-    predicao = modelo.predict(vetor)[0]
-    probabilidade = modelo.predict_proba(vetor)[0]
-    sentimento = "Positivo" if predicao == 1 else "Negativo"
-    confianca = probabilidade[predicao] * 100
-    return sentimento, confianca
+try:
+    model, vectorizer = carregar_artefatos()
+except Exception as e:
+    st.error(f"Erro ao carregar os models. Certifique-se de que rodou o script 02. Erro: {e}")
+    st.stop()
 
-# --- Layout ---
-st.set_page_config(page_title="Análise de Sentimento", page_icon="🎬")
-st.title("🎬 Análise de Sentimento - IMDb PT-BR")
-st.caption("Digite uma avaliação de filme em português e descubra se o sentimento é positivo ou negativo.")
+# --- GERENCIAMENTO DE ESTADO (HISTÓRICO) ---
+if 'historico' not in st.session_state:
+    st.session_state.historico = []
 
-_verificar_versao()
-modelo, vectorizer = carregar_modelo()
+# --- INTERFACE VISUAL ---
+st.title(" Painel Analítico de Sentimentos — IMDb")
+st.markdown("Insira a crítica de um filme em português para analisar a polaridade do texto com Machine Learning clássico calibrado.")
 
-frase = st.text_area("Avaliação:", placeholder="Ex: Esse filme foi incrível, uma obra-prima!", height=120)
+# Criando duas colunas na tela principal
+col1, col2 = st.columns([1.2, 0.8], gap="large")
 
-if st.button("Classificar", type="primary"):
-    if not frase.strip():
-        st.warning("Digite uma avaliação antes de classificar.")
-    else:
-        sentimento, confianca = classificar(frase, modelo, vectorizer)
+with col1:
+    st.subheader(" Entrada de Dados")
+    frase_usuario = st.text_area(
+        "Digite ou cole a crítica do filme aqui:",
+        placeholder="Ex: O filme tem uma fotografia espetacular, mas o roteiro perde o ritmo no segundo ato...",
+        height=150
+    )
+    
+    botao_analisar = st.button("Executar Análise de Dados", type="primary")
 
-        if sentimento == "Positivo":
-            st.success(f"Sentimento: **{sentimento}**")
+with col2:
+    st.subheader(" Resultado do Modelo")
+    
+    if botao_analisar and frase_usuario.strip() != "":
+        # 1. Pipeline de NLP em tempo real (Restaurado)
+        texto_limpo = limpar_texto(frase_usuario)
+        vetor_texto = vectorizer.transform([texto_limpo])
+        
+        # 2. Predição baseada diretamente nas probabilidades (Alinhado contra inversão)
+        probabilidades = model.predict_proba(vetor_texto)[0] # [Prob_Neg, Prob_Pos]
+        prob_neg = probabilidades[0]
+        prob_pos = probabilidades[1]
+        
+        # Define o resultado com base na maior probabilidade
+        if prob_pos >= prob_neg:
+            classe_resultado = "Positivo"
+            confianca = prob_pos
         else:
-            st.error(f"Sentimento: **{sentimento}**")
+            classe_resultado = "Negativo"
+            confianca = prob_neg
+        
+        # 3. Guardar no histórico da sessão
+        st.session_state.historico.insert(0, {"Texto": frase_usuario[:60] + "...", "Sentimento": classe_resultado})
 
-        st.progress(int(confianca))
-        st.caption(f"Confiança do modelo: {confianca:.1f}%")
+        # 4. Exibição de Métricas Visuais Dinâmicas
+        if classe_resultado == "Positivo":
+            st.success(f"### Sentimento Detectado: {classe_resultado} ")
+            st.metric(label="Grau de Certeza do Algoritmo", value=f"{confianca*100:.2f}%", delta="Classificação Confiável")
+        else:
+            st.error(f"### Sentimento Detectado: {classe_resultado} ")
+            st.metric(label="Grau de Certeza do Algoritmo", value=f"{confianca*100:.2f}%", delta="- Classificação Confiável", delta_color="inverse")
+            
+        # 5. Estruturação correta do DataFrame para o Plotly
+        df_proba = pd.DataFrame({
+            'Sentimento': ['Negativo', 'Positivo'],
+            'Probabilidade': [prob_neg * 100, prob_pos * 100]
+        })
+        
+        fig = px.bar(
+            df_proba, 
+            x='Probabilidade', 
+            y='Sentimento', 
+            orientation='h',
+            text='Probabilidade',
+            color='Sentimento',
+            color_discrete_map={'Positivo': '#2ecc71', 'Negativo': '#e74c3c'},
+            range_x=[0, 100]
+        )
+        
+        fig.update_traces(texttemplate='%{text:.2f}%', textposition='outside')
+        fig.update_layout(
+            height=200, 
+            margin=dict(l=0, r=0, t=30, b=0),
+            showlegend=False,
+            xaxis_title="Confiança (%)",
+            yaxis_title=""
+        )
+        st.plotly_chart(fig, use_container_width=True)
+        
+    else:
+        st.info("Aguardando a inserção de texto para processar os gráficos e indicadores.")
+
+# --- SEÇÃO INFERIOR: HISTÓRICO DE INTERAÇÕES (STORYTELLING/BI) ---
+st.write("---")
+st.subheader(" Histórico de Consultas da Sessão")
+
+if st.session_state.historico:
+    df_hist = pd.DataFrame(st.session_state.historico)
+    st.dataframe(df_hist, use_container_width=True)
+else:
+    st.caption("Nenhuma crítica analisada nesta sessão ainda.")
