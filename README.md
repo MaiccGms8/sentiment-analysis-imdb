@@ -1,4 +1,4 @@
-## Análise de Sentimento - IMDb PT-BR
+# 🎬 Análise de Sentimento IMDb
 
 ![Python](https://img.shields.io/badge/Python-3.12-blue?style=flat)
 ![ML](https://img.shields.io/badge/Scikit--Learn-PyTorch-orange?style=flat)
@@ -6,152 +6,60 @@
 
 [![App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://maicc-sentiment-analysis-imdb.streamlit.app/)
 
-Classificação de avaliações de filmes em português como **positivas** ou **negativas** usando NLP e Machine Learning, com interface web interativa via Streamlit.
+## 🛠 Tecnologias
+* **Linguagem:** Python 3.12
+* **Bibliotecas ML:** Pandas, Scikit-Learn 1.8, NLTK, Matplotlib, Joblib
+* **Interface:** Streamlit (Web App)
 
-**Dataset:** [IMDb Reviews PT-BR no Kaggle](https://www.kaggle.com/datasets/luisfredgs/imdb-ptbr)
-
----
-
-## Tecnologias
-
-- Python 3.12
-- Pandas, Scikit-Learn 1.8, NLTK, Matplotlib
-- Streamlit (interface web)
-- Joblib (serialização de modelos)
-
----
-
-## Estrutura do projeto
-
-```
+## 📂 Estrutura do Projeto
+```text
 sentiment-analysis-imdb/
-├── data/                          # Dataset CSV (não versionado)
-│   └── imdb-reviews-pt-br.csv
-├── models/                        # Artefatos gerados pelo treinamento
-│   ├── melhor_modelo_sentimento.pkl
-│   ├── vectorizer_tfidf.pkl
-│   └── metadata.pkl               # Versão do scikit-learn usada no treino
-├── notebooks/
-│   ├── 01_exploracao_e_modelagem.ipynb
-│   └── 02_experimentacao.ipynb
-├── src/
-│   ├── preprocess.py              # Limpeza de texto (módulo compartilhado)
-│   ├── 01_preprocess.py           # Demonstração da limpeza
-│   ├── 02_save_model.py           # Treinamento e salvamento do modelo
-│   └── 03_predict.py              # Predição via terminal
-├── app.py                         # Interface Streamlit
+├── data/           # Dataset (imdb-reviews-pt-br.csv)
+├── models/         # Artefatos treinados (.pkl)
+├── notebooks/      # Exploração e experimentos
+├── src/            # Módulos de pré-processamento e lógica
+├── app.py          # Interface Streamlit
 └── requirements.txt
-```
-
 ---
 
-## Como rodar
+🚀 Como Rodar
 
-### 1. Clonar o repositório
-
-```bash
-git clone https://github.com/MaiccGms8/sentiment-analysis-imdb.git
+1. Clonar e Ambiente
+git clone [https://github.com/MaiccGms8/sentiment-analysis-imdb.git](https://github.com/MaiccGms8/sentiment-analysis-imdb.git)
 cd sentiment-analysis-imdb
-```
-
-### 2. Criar e ativar o ambiente virtual
-
-```bash
 python -m venv .venv
 
-# Git Bash / Linux / Mac:
-source .venv/Scripts/activate
+# Ativação (Linux/Mac): 
+source .venv/bin/activate
 
-# PowerShell:
-.venv\Scripts\Activate.ps1
-
-# CMD:
-.venv\Scripts\activate.bat
-```
-
-### 3. Instalar as dependências
-
-```bash
+2. Instalação e Dataset
 pip install -r requirements.txt
-```
 
-### 4. Baixar o dataset
+Coloque o dataset em data/imdb-reviews-pt-br.csv (disponível no Kaggle).
 
-Acesse o Kaggle e faça login:
-[https://www.kaggle.com/datasets/luisfredgs/imdb-ptbr](https://www.kaggle.com/datasets/luisfredgs/imdb-ptbr)
+3. Execução
+Treinar: python src/02_save_model.py
 
-Baixe o arquivo `imdb-reviews-pt-br.csv` e coloque-o em:
+Interface Web: python -m streamlit run app.py
 
-```
-sentiment-analysis-imdb/
-└── data/
-    └── imdb-reviews-pt-br.csv
-```
+Terminal: python src/03_predict.py
 
-> A pasta `data/` não é versionada no git — crie-a manualmente antes de copiar o arquivo.
+🧠 Pipeline de NLP
+Limpeza: Remoção de pontuação e stopwords (preservando negações).
 
-### 5. Treinar o modelo
+Vetorização: TF-IDF com 5.000 features.
 
-```bash
-python src/02_save_model.py
-```
+Classificação: Regressão Logística (Modelo Baseline) e testes com Deep Learning/BERT.
 
-Gera três arquivos em `models/`:
-- `melhor_modelo_sentimento.pkl` — modelo de Regressão Logística treinado
-- `vectorizer_tfidf.pkl` — vetorizador TF-IDF
-- `metadata.pkl` — versão do scikit-learn usada no treino
+📊 Status
+[x] Estrutura modular (preprocess.py)
 
-> Sempre execute este script com o mesmo ambiente Python usado para rodar o app. Se houver incompatibilidade de versão do scikit-learn, o app bloqueará a execução com uma mensagem de erro.
+[x] Modelo baseline (Regressão Logística)
 
-### 6. Iniciar a interface web
+[x] Interface Web (Streamlit)
 
-```bash
-python -m streamlit run app.py
-```
+[x] Verificação de versão (Scikit-Learn)
 
-Acesse `http://localhost:8501` no navegador, digite uma avaliação de filme em português e clique em **Classificar**.
+[x] Fine-tuning e Deep Learning (BERTimbau)
 
-> Use `python -m streamlit` em vez de `streamlit` diretamente para garantir que o executável do `.venv` seja usado, evitando conflitos com outros ambientes Python (ex: Anaconda) instalados no sistema.
-
-### 7. (Opcional) Testar via terminal
-
-```bash
-python src/03_predict.py
-```
-
-Saída esperada:
-```
-Frase: Esse filme foi uma perda de tempo total, odiei.
-Resultado: Negativo (94.3% de confiança)
-```
-
-### 8. (Opcional) Explorar os notebooks
-
-```bash
-jupyter lab
-```
-
----
-
-## Pipeline de NLP
-
-1. **Limpeza** (`preprocess.py`) — lowercase, remoção de pontuação e stopwords em português (preservando negações: *não, nem, nunca, nada, tampouco*)
-2. **Vetorização** — TF-IDF com 5.000 features
-3. **Classificação** — Regressão Logística binária (positivo / negativo)
-
----
-
-## Status
-
-- [x] Estrutura do repositório configurada
-- [x] Limpeza de texto modularizada (`preprocess.py`)
-- [x] Modelo baseline (Regressão Logística) treinado e salvo
-- [x] Interface web com Streamlit
-- [x] Verificação de compatibilidade de versão do scikit-learn
-- [x] Comparação entre modelos (Naive Bayes, Random Forest)
-- [x] Tuning de hiperparâmetros
-- [x] Modelos de Deep Learning / BERT em português
-
----
-
-**Desenvolvido por Maicon Gomes e Cezar Tosta**
+Desenvolvido por Maicon Gomes e Cezar Tosta
